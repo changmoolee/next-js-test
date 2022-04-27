@@ -1,30 +1,20 @@
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import Seo from "../components/Seo";
 
-const API_KEY = "378ccea3841975555a64278aef5f911a";
-
-export default function Home() {
-  const [movies, setMovies] = useState();
-
-  useEffect(() => {
-    (async () => {
-      const response = await fetch(
-        `https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}`
-      );
-      const { results } = await response.json();
-      setMovies(results);
-    })(); // async 부분이 익명 함수(재사용 불가)로 작성되었고, 익명 함수는 즉시 실행해야 하기 때문에 ()를 이용해 익명 함수를 바로 호출하는 것
-  }, []);
-
-  console.log(movies);
+export default function Home({ results }) {
+  console.log({ results });
   return (
     <div>
       <Seo title="home" />
-      {!movies && <h2>Loading...</h2>}
-      {movies?.map((movie) => (
-        <div key={movie.id}>
-          <h2>{movie.original_title}</h2>
-        </div>
+      {!results && <h2>Loading...</h2>}
+      {results?.map((movie) => (
+        <Link href={`movies/${movie.id}`} key={movie.id}>
+          <div key={movie.id}>
+            <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} />
+            <h2>{movie.original_title}</h2>
+          </div>
+        </Link>
       ))}
       <style jsx>{`
         a {
@@ -36,4 +26,15 @@ export default function Home() {
       `}</style>
     </div>
   );
+}
+
+export async function getServerSideProps() {
+  // 오직 서버 백엔드 (서버 사이드)에서만 돌아가는 코드
+  const response = await fetch(`http://localhost:3000/api/movies`);
+  const { results } = await response.json();
+  return {
+    props: {
+      results,
+    }, // 페이지에게 props로 줄 내용들
+  };
 }
